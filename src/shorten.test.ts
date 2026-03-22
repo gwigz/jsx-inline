@@ -64,6 +64,42 @@ describe("buildShorteningMap", () => {
 `);
   });
 
+  test("extracts class names from HTML class attributes", () => {
+    const html = `<div class="obj-group"><div class="obj-header">hi</div></div>`;
+    const map = buildShorteningMap(html);
+
+    expect(map.classes).toMatchInlineSnapshot(`
+[
+  [
+    "obj-header",
+    "a",
+  ],
+  [
+    "obj-group",
+    "b",
+  ],
+]
+`);
+  });
+
+  test("merges class names from style blocks and HTML attributes", () => {
+    const html = `<style>.styled { color: red }</style><div class="styled"><div class="js-only">hi</div></div>`;
+    const map = buildShorteningMap(html);
+
+    expect(map.classes).toMatchInlineSnapshot(`
+[
+  [
+    "js-only",
+    "a",
+  ],
+  [
+    "styled",
+    "b",
+  ],
+]
+`);
+  });
+
   test("passes through booleanAttrs", () => {
     const map = buildShorteningMap("<div></div>", ["checked", "disabled"]);
     expect(map.booleanAttrs).toEqual(["checked", "disabled"]);

@@ -28,12 +28,20 @@ export interface ShorteningMap {
  * Extracts CSS class names, element IDs, and boolean attributes to collapse.
  */
 export function buildShorteningMap(allHtml: string, booleanAttrs: string[] = []): ShorteningMap {
-  // 1. CSS class names from all <style> blocks
+  // 1. CSS class names from <style> blocks and HTML class attributes
   const classNames = new Set<string>();
 
   for (const styleMatch of allHtml.matchAll(/<style>([\s\S]*?)<\/style>/g)) {
     for (const match of styleMatch[1].matchAll(/\.([a-z][a-z0-9-]*)/g)) {
       classNames.add(match[1]);
+    }
+  }
+
+  for (const classMatch of allHtml.matchAll(/class="([^"]+)"/g)) {
+    for (const cls of classMatch[1].split(/\s+/)) {
+      if (/^[a-z][a-z0-9-]*$/.test(cls)) {
+        classNames.add(cls);
+      }
     }
   }
 
