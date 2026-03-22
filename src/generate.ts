@@ -65,7 +65,7 @@ export function generateTsModule(evaluated: EvaluatedModule, map: ShorteningMap)
   // 3. Compile inline JSX expressions (reverse source order to preserve positions)
   for (const { fn, entries } of inlineJsxData) {
     const fnName = fn.getName()!;
-    const reversedEntries = [...entries].sort((a, b) => b.jsxNode.getStart() - a.jsxNode.getStart());
+    const reversedEntries = entries.toSorted((a, b) => b.jsxNode.getStart() - a.jsxNode.getStart());
 
     for (const entry of reversedEntries) {
       const html = applyShorteningMap(entry.html, map);

@@ -13,7 +13,7 @@ function shortClassName(i: number) {
 /** Sorts names longest-first and pairs each with a short generated name. */
 function buildPairs(names: Set<string>): [string, string][] {
   return [...names]
-    .sort((a, b) => b.length - a.length || a.localeCompare(b))
+    .toSorted((a, b) => b.length - a.length || a.localeCompare(b))
     .map((name, i) => [name, shortClassName(i)]);
 }
 

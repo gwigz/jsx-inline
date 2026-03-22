@@ -212,7 +212,7 @@ function extractDynamicSlots(jsxNode: Node, startIndex: number): SlotInfo[] {
 function buildMarkedJsxText(jsxNode: Node, slots: SlotInfo[]): string {
   let text = jsxNode.getText();
   const jsxStart = jsxNode.getStart();
-  const sorted = [...slots].sort((a, b) => b.pos - a.pos);
+  const sorted = slots.toSorted((a, b) => b.pos - a.pos);
 
   for (const slot of sorted) {
     const relStart = slot.pos - jsxStart;
