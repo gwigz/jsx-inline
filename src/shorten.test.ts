@@ -99,23 +99,18 @@ describe("buildShorteningMap", () => {
 ]
 `);
   });
-
-  test("passes through booleanAttrs", () => {
-    const map = buildShorteningMap("<div></div>", ["checked", "disabled"]);
-    expect(map.booleanAttrs).toEqual(["checked", "disabled"]);
-  });
 });
 
 describe("applyShorteningMap", () => {
   test("replaces class names in HTML", () => {
     const html = `<style>.container{color:red}.title{font-weight:bold}</style><div class="container"><span class="title">hi</span></div>`;
+
     const map = {
       classes: [
         ["container", "a"],
         ["title", "b"],
       ] as [string, string][],
       ids: [],
-      booleanAttrs: [],
     };
 
     expect(applyShorteningMap(html, map)).toMatchInlineSnapshot(
@@ -125,32 +120,21 @@ describe("applyShorteningMap", () => {
 
   test("replaces IDs and #id references", () => {
     const html = `<div id="main-box" hx-target="#main-box">content</div>`;
+
     const map = {
       classes: [],
       ids: [["main-box", "a"]] as [string, string][],
-      booleanAttrs: [],
     };
 
     expect(applyShorteningMap(html, map)).toMatchInlineSnapshot(`"<div id="a" hx-target="#a">content</div>"`);
   });
 
-  test("collapses boolean attributes", () => {
-    const html = `<input checked="checked" disabled="disabled" />`;
-    const map = {
-      classes: [],
-      ids: [],
-      booleanAttrs: ["checked", "disabled"],
-    };
-
-    expect(applyShorteningMap(html, map)).toMatchInlineSnapshot(`"<input checked="" disabled="" />"`);
-  });
-
   test("replaces JS references to element IDs via global named access", () => {
     const html = `<button onclick="fd.showModal()">Open</button><dialog id="fd">content</dialog>`;
+
     const map = {
       classes: [],
       ids: [["fd", "a"]] as [string, string][],
-      booleanAttrs: [],
     };
 
     expect(applyShorteningMap(html, map)).toMatchInlineSnapshot(
@@ -160,10 +144,10 @@ describe("applyShorteningMap", () => {
 
   test("replaces JS references after semicolons", () => {
     const html = `<button x-on:click="x='';fd.close()">Cancel</button><dialog id="fd">content</dialog>`;
+
     const map = {
       classes: [],
       ids: [["fd", "a"]] as [string, string][],
-      booleanAttrs: [],
     };
 
     expect(applyShorteningMap(html, map)).toMatchInlineSnapshot(
@@ -173,10 +157,10 @@ describe("applyShorteningMap", () => {
 
   test("does not replace JS references for hyphenated IDs", () => {
     const html = `<button onclick="test">click</button><div id="my-dialog">content</div>`;
+
     const map = {
       classes: [],
       ids: [["my-dialog", "a"]] as [string, string][],
-      booleanAttrs: [],
     };
 
     expect(applyShorteningMap(html, map)).toMatchInlineSnapshot(
@@ -184,12 +168,12 @@ describe("applyShorteningMap", () => {
     );
   });
 
-  test("handles combined classes, IDs, and boolean attrs", () => {
-    const html = `<style>.wrapper{margin:0}</style><div class="wrapper" id="root"><input checked="checked" /></div><a href="#root">link</a>`;
+  test("handles combined classes and IDs", () => {
+    const html = `<style>.wrapper{margin:0}</style><div class="wrapper" id="root"><input checked="" /></div><a href="#root">link</a>`;
+
     const map = {
       classes: [["wrapper", "a"]] as [string, string][],
       ids: [["root", "b"]] as [string, string][],
-      booleanAttrs: ["checked"],
     };
 
     expect(applyShorteningMap(html, map)).toMatchInlineSnapshot(

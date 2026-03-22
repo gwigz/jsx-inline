@@ -19,8 +19,9 @@ function readOutput(dir: string, name: string): string {
 }
 
 describe("compile", () => {
-  test("basic template — JSX becomes string concatenation", async () => {
+  test("basic template, JSX becomes string concatenation", async () => {
     const { file, dir } = setupFixture("basic");
+
     try {
       await compile([file]);
 
@@ -35,8 +36,9 @@ describe("compile", () => {
     }
   });
 
-  test("classes/IDs — CSS class names and IDs are shortened", async () => {
+  test("classes/IDs, CSS class names and IDs are shortened", async () => {
     const { file, dir } = setupFixture("classes");
+
     try {
       await compile([file]);
 
@@ -51,8 +53,9 @@ describe("compile", () => {
     }
   });
 
-  test("inline JSX — JSX inside non-template functions is compiled", async () => {
+  test("inline JSX, JSX inside non-template functions is compiled", async () => {
     const { file, dir } = setupFixture("inline");
+
     try {
       await compile([file]);
 
@@ -71,10 +74,47 @@ describe("compile", () => {
     }
   });
 
-  test("boolean attrs — checked attribute is collapsed", async () => {
-    const { file, dir } = setupFixture("boolean");
+  test("dynamic boolean attrs, pure template conditionally includes checked", async () => {
+    const { file, dir } = setupFixture("boolean-dynamic");
+
     try {
-      await compile([file], { booleanAttrs: ["checked"] });
+      await compile([file]);
+
+      expect(readOutput(dir, "boolean-dynamic")).toMatchInlineSnapshot(`
+"export function dynamicCheckbox(label: string, enabled: boolean) {
+    return "<form><input type=\\"checkbox\\"" + (enabled ? ' checked=""' : "") + "/><label>" + label + "</label></form>";
+}
+"
+`);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("dynamic boolean attrs, inline JSX conditionally includes checked", async () => {
+    const { file, dir } = setupFixture("boolean-inline");
+
+    try {
+      await compile([file]);
+
+      expect(readOutput(dir, "boolean-inline")).toMatchInlineSnapshot(`
+"export function toggleRow(name: string, active: boolean) {
+  const rows: string[] = [];
+  rows.push(("<input type=\\"checkbox\\"" + (active ? ' checked=""' : "") + " name=\\"" + name + "\\"/>"));
+  return rows.join("");
+}
+"
+`);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("static boolean attrs, checked={true} renders checked attribute", async () => {
+    const { file, dir } = setupFixture("boolean");
+
+    try {
+      await compile([file]);
 
       expect(readOutput(dir, "boolean")).toMatchInlineSnapshot(`
 "export function checkboxForm(name: string) {

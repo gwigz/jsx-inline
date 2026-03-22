@@ -37,19 +37,16 @@ Call `compile()` in your build script before transpilation:
 ```ts
 import { compile } from "@gwigz/jsx-inline";
 
-await compile(["src/template.tsx", "src/ui.tsx"], {
-  booleanAttrs: ["checked", "defer"],
-});
+await compile(["src/template.tsx", "src/ui.tsx"]);
 ```
 
 This reads each `.tsx` file, evaluates the JSX, and writes a corresponding `.ts` file with all markup replaced by string literals. Run your normal build step after.
 
 ## Options
 
-| Option          | Type       | Default | Description                                                                             |
-| --------------- | ---------- | ------- | --------------------------------------------------------------------------------------- |
-| `booleanAttrs`  | `string[]` | `[]`    | HTML attributes to collapse (e.g. `checked=""`)                                         |
-| `minifyOptions` | `object`   |         | Override [html-minifier-terser](https://github.com/terser/html-minifier-terser) options |
+| Option          | Type     | Default | Description                                                                             |
+| --------------- | -------- | ------- | --------------------------------------------------------------------------------------- |
+| `minifyOptions` | `object` |         | Override [html-minifier-terser](https://github.com/terser/html-minifier-terser) options |
 
 ## Example
 
@@ -79,7 +76,7 @@ export function pageShell(title: string) {
 }
 ```
 
-CSS classes and IDs are shortened across all files (`toolbar` → `a`, `status` → `b`, etc.) to minimize output size.
+CSS classes and IDs are shortened across all files (`toolbar` → `a`, `status` → `b`, etc.) to minimize output size. Boolean attributes like `checked` are automatically detected from parameter types and compiled into conditional expressions (e.g. `checked={enabled}` becomes `(enabled ? ' checked=""' : "")`).
 
 ## How it works
 

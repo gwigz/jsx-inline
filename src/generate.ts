@@ -4,12 +4,35 @@ import type { EvaluatedModule } from "./evaluate";
 import type { ShorteningMap } from "./shorten";
 import { applyShorteningMap } from "./shorten";
 
-/** Builds a string-concat expression from segments and slot values. */
-function buildConcatExpr(segments: string[], slotValues: string[]): string {
-  let expr = JSON.stringify(segments[0]);
+/** Returns indices of slots whose predicate returns true. */
+function detectBooleanSlots(slotNames: string[], isBoolean: (name: string) => boolean): Set<number> {
+  const result = new Set<number>();
+  for (let i = 0; i < slotNames.length; i++) {
+    if (isBoolean(slotNames[i])) result.add(i);
+  }
+  return result;
+}
 
-  for (let i = 0; i < slotValues.length; i++) {
-    expr += ` + ${slotValues[i]} + ${JSON.stringify(segments[i + 1])}`;
+/** Builds a string-concat expression from segments and slot values. */
+function buildConcatExpr(segments: string[], slotValues: string[], booleanSlots = new Set<number>()): string {
+  const segs = booleanSlots.size > 0 ? [...segments] : segments;
+  const vals = booleanSlots.size > 0 ? [...slotValues] : slotValues;
+
+  // Rewrite boolean-typed slots: ` attr="` + val + `"` → (val ? ' attr=""' : "")
+  for (const i of booleanSlots) {
+    const match = segs[i].match(/ ([a-z-]+)="$/);
+    if (match && segs[i + 1].startsWith('"')) {
+      const attr = match[1];
+      segs[i] = segs[i].slice(0, -match[0].length);
+      segs[i + 1] = segs[i + 1].slice(1);
+      vals[i] = `(${vals[i]} ? ' ${attr}=""' : "")`;
+    }
+  }
+
+  let expr = JSON.stringify(segs[0]);
+
+  for (let i = 0; i < vals.length; i++) {
+    expr += ` + ${vals[i]} + ${JSON.stringify(segs[i + 1])}`;
   }
 
   return expr;
@@ -53,7 +76,9 @@ export function generateTsModule(evaluated: EvaluatedModule, map: ShorteningMap)
     const html = applyShorteningMap(fnHtml[fnName], map);
     const { segments, slotNames } = splitFragment(fnName, html);
 
-    fn.setBodyText(`return ${buildConcatExpr(segments, slotNames)};`);
+    const booleanSlots = detectBooleanSlots(slotNames, (n) => fn.getParameter(n)?.getType().isBoolean() ?? false);
+
+    fn.setBodyText(`return ${buildConcatExpr(segments, slotNames, booleanSlots)};`);
   }
 
   // 2. Apply shortening + compile const templates
@@ -65,6 +90,12 @@ export function generateTsModule(evaluated: EvaluatedModule, map: ShorteningMap)
   // 3. Compile inline JSX expressions (reverse source order to preserve positions)
   for (const { fn, entries } of inlineJsxData) {
     const fnName = fn.getName()!;
+    const booleanParams = new Set(
+      fn
+        .getParameters()
+        .filter((p) => p.getType().isBoolean())
+        .map((p) => p.getName()),
+    );
     const reversedEntries = entries.toSorted((a, b) => b.jsxNode.getStart() - a.jsxNode.getStart());
 
     for (const entry of reversedEntries) {
@@ -78,7 +109,12 @@ export function generateTsModule(evaluated: EvaluatedModule, map: ShorteningMap)
         return v;
       });
 
-      entry.jsxNode.replaceWithText(`(${buildConcatExpr(segments, slotValues)})`);
+      const booleanSlots = detectBooleanSlots(slotNames, (n) => {
+        const text = slotLookup.get(n);
+        return text !== undefined && booleanParams.has(text);
+      });
+
+      entry.jsxNode.replaceWithText(`(${buildConcatExpr(segments, slotValues, booleanSlots)})`);
     }
   }
 

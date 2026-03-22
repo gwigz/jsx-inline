@@ -20,14 +20,13 @@ function buildPairs(names: Set<string>): [string, string][] {
 export interface ShorteningMap {
   classes: [string, string][];
   ids: [string, string][];
-  booleanAttrs: string[];
 }
 
 /**
  * Builds a shortening map from concatenated HTML strings.
- * Extracts CSS class names, element IDs, and boolean attributes to collapse.
+ * Extracts CSS class names and element IDs for shortening.
  */
-export function buildShorteningMap(allHtml: string, booleanAttrs: string[] = []): ShorteningMap {
+export function buildShorteningMap(allHtml: string): ShorteningMap {
   // 1. CSS class names from <style> blocks and HTML class attributes
   const classNames = new Set<string>();
 
@@ -52,7 +51,7 @@ export function buildShorteningMap(allHtml: string, booleanAttrs: string[] = [])
     idSet.add(idMatch[1]);
   }
 
-  return { classes: buildPairs(classNames), ids: buildPairs(idSet), booleanAttrs };
+  return { classes: buildPairs(classNames), ids: buildPairs(idSet) };
 }
 
 /**
@@ -78,11 +77,6 @@ export function applyShorteningMap(html: string, map: ShorteningMap): string {
         html = html.replaceAll(`${prefix}${long}.`, `${prefix}${short}.`);
       }
     }
-  }
-
-  // 3. Collapse boolean attributes (checked="checked" -> checked="")
-  for (const attr of map.booleanAttrs) {
-    html = html.replaceAll(`${attr}="${attr}"`, `${attr}=""`);
   }
 
   return html;

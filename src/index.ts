@@ -4,8 +4,6 @@ import { generateTsModule } from "./generate";
 import { buildShorteningMap } from "./shorten";
 
 export interface CompileOptions {
-  /** Boolean HTML attributes to collapse (e.g. checked="checked" -> checked=""). Default: [] */
-  booleanAttrs?: string[];
   /** html-minifier-terser options override */
   minifyOptions?: MinifyOptions;
 }
@@ -22,7 +20,6 @@ export interface CompileOptions {
  */
 export async function compile(files: string[], options?: CompileOptions): Promise<void> {
   const minifyOptions = options?.minifyOptions;
-  const booleanAttrs = options?.booleanAttrs ?? [];
 
   // Phase A: evaluate all .tsx modules in parallel, collect minified HTML
   const evaluated: EvaluatedModule[] = await Promise.all(
@@ -38,7 +35,7 @@ export async function compile(files: string[], options?: CompileOptions): Promis
     for (const d of e.inlineJsxData) for (const entry of d.entries) htmlParts.push(entry.html);
   }
 
-  const map = buildShorteningMap(htmlParts.join(""), booleanAttrs);
+  const map = buildShorteningMap(htmlParts.join(""));
 
   // Phase B: apply shortening map and generate .ts files
   for (const mod of evaluated) {
