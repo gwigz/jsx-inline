@@ -1,6 +1,6 @@
 {
   "name": "@gwigz/jsx-inline",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Compile JSX templates into optimized inline string literals at build time",
   "keywords": [
     "build-time",

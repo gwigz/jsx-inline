@@ -61,6 +61,15 @@ export function applyShorteningMap(html: string, map: ShorteningMap): string {
   for (const [long, short] of map.ids) {
     html = html.replaceAll(`id="${long}"`, `id="${short}"`);
     html = html.replaceAll(`#${long}`, `#${short}`);
+
+    // Also update JS references via global named element access (window.id).
+    // Covers onclick="id.method()" and x-on:click="...;id.method()".
+    // Only applies to IDs that are valid JS identifiers (no hyphens).
+    if (!long.includes("-")) {
+      for (const prefix of ['"', "'", ";", "(", ","]) {
+        html = html.replaceAll(`${prefix}${long}.`, `${prefix}${short}.`);
+      }
+    }
   }
 
   // 3. Collapse boolean attributes (checked="checked" -> checked="")
